@@ -1,0 +1,205 @@
+<html>
+<body>
+
+Number of Layers
+<input type="number" id="layers" value="5"/>
+<button onclick="makeTower()">Go</button>
+<button onclick="moveTowers()">Solve</button>
+<table id="towers">
+  <tr>
+    <td>a</td>
+	<td>b</td>
+    <td>c</td>
+  </tr>
+  <tr>
+    <td id="tower-a"></td>
+    <td id="tower-b"></td>
+    <td id="tower-c"></td>
+  </tr>
+</table>
+
+<script>
+let layersEl = document.getElementById("layers");
+
+let moves = []
+
+var towers;
+
+function makeTower() {
+  towers = {
+    a: [],
+	b: [],
+	c: []
+  }
+
+  for (var i = 0; i < layersEl.value; i++) {
+    towers.a.push(i + 1);
+  }
+  showTowers(towers);
+}
+
+function moveTowers() {
+  moves = [];
+  moveTower(towers, "a", "b", "c", towers.a.length);
+  
+  makeTower()
+  
+  var i = 0
+  function showNextMove() {
+    console.log(i, moves.length);
+	if (i >= moves.length) {
+	  return
+	}
+	
+	let move = moves[i]
+	
+	let start = move[0]
+	let end = move[1]
+	
+	var pos = layersEl.value - towers[start].length
+	var down = layersEl.value - towers[end].length - 1
+
+    var removedDisc = towers[start].shift();
+	
+	function animateUp() {
+      console.log("up:", pos)
+      if (pos < 0) {
+		showTowers(towers)
+		animateDown()
+	    return
+	  }
+	  
+	  let overrides = {}
+      overrides[start] = {
+	    row: pos,
+	    rowString: makeDiscLine(removedDisc, layersEl.value)
+	  }
+		
+	  console.log("  overrides:", overrides)
+		
+      showTowers(towers, overrides)
+	  pos = pos - 1
+	  setTimeout(animateUp, 50)
+	}
+	
+	function animateDown() {
+      if (pos > down) {
+		i++;
+        towers[end].unshift(removedDisc)
+	    showTowers(towers)
+		showNextMove()
+	    return
+	  }
+	  
+	  let overrides = {}
+      overrides[end] = {
+	    row: pos,
+	    rowString: makeDiscLine(removedDisc, layersEl.value)
+	  }
+		
+	  console.log("  overrides:", overrides)
+		
+      showTowers(towers, overrides)
+	  pos = pos + 1
+	  setTimeout(animateDown, 50)
+	}
+	
+	animateUp()
+  }
+  
+  showNextMove()
+}
+
+function moveTower(towers, start, end, temp, height) {
+  if (height <= 0) {
+    return
+  }
+  
+  moveTower(towers, start, temp, end, height - 1)
+  moveDisc(towers, start, end)
+  moves.push([start, end])
+  moveTower(towers, temp, end, start, height - 1)
+}
+
+function moveDisc(towers, start, end) {
+  var removedDisc = towers[start].shift();
+  if (removedDisc == null) {
+    alert("You removed from an empty tower! " + start)
+	return
+  }
+  if (towers[end][0] < removedDisc) {
+    alert("You placed a disc over a smaller disc!")
+	return
+  }
+
+  towers[end].unshift(removedDisc)
+}
+
+
+function showTowers(towers, overrides) {
+  overrides = overrides || {}
+
+  let overridesA = overrides.a || {}
+  showTower("tower-a", towers.a, layersEl.value, overridesA.row, overridesA.rowString)
+
+  let overridesB = overrides.b || {}
+  showTower("tower-b", towers.b, layersEl.value, overridesB.row, overridesB.rowString)
+
+  let overridesC = overrides.c || {}
+  showTower("tower-c", towers.c, layersEl.value, overridesC.row, overridesC.rowString)
+}
+
+function makeDiscLine(length, maxLength) {
+  var n = ""
+  for (var i = 0; i < maxLength - length; i++) {
+    n = n + " "
+  }
+  for (var i = 0; i < length; i++) {
+    n = n + "-"
+  }
+  n = n + "|"
+  for (var i = 0; i < length; i++) {
+    n = n + "-"
+  }
+  for (var i = 0; i < maxLength - length; i++) {
+    n = n + " "
+  }
+  return n
+}
+
+function showTower(elID, discs, height, overrideRow, overrideRowString) {
+  var n = discs.length
+  var s = "";
+  var row = 0
+  
+  var bar = makeDiscLine(0, height)
+  for (var i = 0; i < height - n; i++) {
+    if (row != overrideRow) {
+      s = s + bar + "\n"
+	} else {
+	  s = s + overrideRowString + "\n"
+	}
+	row++;
+  }
+  for (var i = 0; i < n; i++) {
+    var disc = discs[i]
+    var line = makeDiscLine(disc, height)
+	if (row != overrideRow) {
+	  s = s + line + "\n"
+	} else {
+	  s = s + overrideRowString + "\n"
+	}
+	row++;
+  }
+  document.getElementById(elID).innerHTML = s
+}
+</script>
+
+<style>
+td {
+  font-family: monospace;
+  white-space: pre;
+}
+</style>
+</body>
+</html>
